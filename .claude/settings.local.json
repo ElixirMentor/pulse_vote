@@ -4,7 +4,8 @@
       "WebFetch(domain:hexdocs.pm)",
       "WebFetch(domain:github.com)",
       "Bash(mix deps.get:*)",
-      "Bash(mix compile)"
+      "Bash(mix compile)",
+      "mcp__tidewave__project_eval"
     ],
     "deny": []
   }

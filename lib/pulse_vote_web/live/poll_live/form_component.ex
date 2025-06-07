@@ -81,8 +81,9 @@ defmodule PulseVoteWeb.PollLive.FormComponent do
   end
 
   def handle_event("add_option", _params, socket) do
+    alias PulseVote.Polls.Poll.Option
     existing_options = socket.assigns.form.source.changes[:options] || socket.assigns.poll.options || []
-    new_options = existing_options ++ [%{text: "", vote_count: 0}]
+    new_options = existing_options ++ [%Option{text: "", vote_count: 0}]
     
     changeset = 
       socket.assigns.poll
@@ -146,9 +147,10 @@ defmodule PulseVoteWeb.PollLive.FormComponent do
   end
   
   defp ensure_default_options(poll) do
+    alias PulseVote.Polls.Poll.Option
     %{poll | options: [
-      %{text: "", vote_count: 0},
-      %{text: "", vote_count: 0}
+      %Option{text: "", vote_count: 0},
+      %Option{text: "", vote_count: 0}
     ]}
   end
 end

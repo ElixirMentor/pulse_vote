@@ -21,9 +21,6 @@ defmodule PulseVoteWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    
-    live "/polls", PollLive.Index, :index
-    live "/polls/:id", PollLive.Show, :show
   end
 
   # Other scopes may use custom stacks.
@@ -70,7 +67,9 @@ defmodule PulseVoteWeb.Router do
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
     
+    live "/polls", PollLive.Index, :index
     live "/polls/new", PollLive.Index, :new
+    live "/polls/:id", PollLive.Show, :show
     live "/polls/:id/edit", PollLive.Index, :edit
     live "/polls/:id/show/edit", PollLive.Show, :edit
   end
