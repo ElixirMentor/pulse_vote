@@ -6,7 +6,9 @@
       "Bash(mix deps.get:*)",
       "Bash(mix compile)",
       "mcp__tidewave__project_eval",
-      "mcp__tidewave__get_logs"
+      "mcp__tidewave__get_logs",
+      "mcp__tidewave__list_liveview_pages",
+      "mcp__tidewave__execute_sql_query"
     ],
     "deny": []
   }
