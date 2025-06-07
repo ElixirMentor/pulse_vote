@@ -1,19 +1,87 @@
-<.header>
-  Poll {@poll.id}
-  <:subtitle>This is a poll record from your database.</:subtitle>
-  <:actions>
-    <.link patch={~p"/polls/#{@poll}/show/edit"} phx-click={JS.push_focus()}>
-      <.button>Edit poll</.button>
-    </.link>
-  </:actions>
-</.header>
+<div class="max-w-2xl mx-auto">
+  <.header>
+    {@poll.title}
+    <:subtitle>{@poll.description}</:subtitle>
+    <:actions>
+      <.link patch={~p"/polls/#{@poll}/show/edit"} phx-click={JS.push_focus()}>
+        <.button>Edit poll</.button>
+      </.link>
+    </:actions>
+  </.header>
 
-<.list>
-  <:item title="Title">{@poll.title}</:item>
-  <:item title="Description">{@poll.description}</:item>
-</.list>
+  <div class="mt-8">
+    <%= if @user_vote do %>
+      <!-- User has already voted - show results -->
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-green-800 font-medium">Thanks for voting! You voted for option <%= @user_vote.option_index + 1 %>.</span>
+        </div>
+      </div>
+      
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Results</h3>
+      <div class="space-y-3">
+        <%= for {option, index} <- Enum.with_index(@poll.options) do %>
+          <div class="relative">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-sm font-medium text-gray-700"><%= option.text %></span>
+              <span class="text-sm text-gray-500">
+                <%= option.vote_count %> votes 
+                (<%= if @total_votes > 0, do: round(option.vote_count / @total_votes * 100), else: 0 %>%)
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div 
+                class={"h-3 rounded-full transition-all duration-300 #{if index == @user_vote.option_index, do: "bg-blue-600", else: "bg-gray-400"}"}
+                style={"width: #{if @total_votes > 0, do: option.vote_count / @total_votes * 100, else: 0}%"}
+              >
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      
+      <div class="mt-4 text-sm text-gray-500">
+        Total votes: <%= @total_votes %>
+      </div>
+      
+    <% else %>
+      <!-- User hasn't voted yet - show voting interface -->
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Cast your vote</h3>
+      <div class="space-y-3">
+        <%= for {option, index} <- Enum.with_index(@poll.options) do %>
+          <button
+            phx-click="vote"
+            phx-value-option_index={index}
+            class="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+            <div class="flex items-center">
+              <div class="flex-shrink-0 w-4 h-4 border border-gray-300 rounded-full mr-3"></div>
+              <span class="text-gray-900"><%= option.text %></span>
+            </div>
+          </button>
+        <% end %>
+      </div>
+      
+      <%= if @current_user == nil do %>
+        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="text-yellow-800">You must be logged in to vote.</span>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
 
-<.back navigate={~p"/polls"}>Back to polls</.back>
+  <div class="mt-8">
+    <.back navigate={~p"/polls"}>Back to polls</.back>
+  </div>
+</div>
 
 <.modal :if={@live_action == :edit} id="poll-modal" show on_cancel={JS.patch(~p"/polls/#{@poll}")}>
   <.live_component

@@ -24,11 +24,11 @@
 - [x] Add basic validation and error handling
 
 ## Phase 4: Voting Interface
-- [ ] Create poll voting LiveView
-- [ ] Display poll title and options
-- [ ] Implement voting buttons
-- [ ] Store votes with session tracking
-- [ ] Prevent duplicate voting per session
+- [x] Create poll voting LiveView
+- [x] Display poll title and options
+- [x] Implement voting buttons
+- [x] Store votes with session tracking
+- [x] Prevent duplicate voting per session
 
 ## Phase 5: Real-time Results
 - [ ] Add PubSub for real-time updates

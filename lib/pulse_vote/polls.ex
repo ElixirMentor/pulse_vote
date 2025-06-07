@@ -7,6 +7,7 @@ defmodule PulseVote.Polls do
   alias PulseVote.Repo
 
   alias PulseVote.Polls.Poll
+  alias PulseVote.Polls.Vote
 
   @doc """
   Returns the list of polls.
@@ -97,5 +98,60 @@ defmodule PulseVote.Polls do
   """
   def change_poll(%Poll{} = poll, attrs \\ %{}) do
     Poll.changeset(poll, attrs)
+  end
+
+  @doc """
+  Casts a vote for a poll option.
+  """
+  def cast_vote(poll_id, option_index, user_id) do
+    %Vote{}
+    |> Vote.changeset(%{
+      poll_id: poll_id,
+      option_index: option_index,
+      user_id: user_id
+    })
+    |> Repo.insert()
+    |> case do
+      {:ok, vote} ->
+        # Update the vote count in the poll
+        poll = get_poll!(poll_id)
+        updated_options = update_option_vote_count(poll.options, option_index, 1)
+        update_poll(poll, %{options: updated_options})
+        {:ok, vote}
+      
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Gets a user's vote for a specific poll.
+  """
+  def get_user_vote(poll_id, user_id) do
+    Repo.get_by(Vote, poll_id: poll_id, user_id: user_id)
+  end
+
+  @doc """
+  Gets the total number of votes for a poll.
+  """
+  def get_total_votes(poll_id) do
+    from(v in Vote, where: v.poll_id == ^poll_id, select: count(v.id))
+    |> Repo.one()
+  end
+
+  defp update_option_vote_count(options, option_index, increment) do
+    options
+    |> Enum.with_index()
+    |> Enum.map(fn {option, index} ->
+      if index == option_index do
+        # Convert to map for the changeset
+        option
+        |> Map.from_struct()
+        |> Map.put(:vote_count, option.vote_count + increment)
+      else
+        # Convert to map for the changeset
+        Map.from_struct(option)
+      end
+    end)
   end
 end

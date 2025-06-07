@@ -5,7 +5,8 @@
       "WebFetch(domain:github.com)",
       "Bash(mix deps.get:*)",
       "Bash(mix compile)",
-      "mcp__tidewave__project_eval"
+      "mcp__tidewave__project_eval",
+      "mcp__tidewave__get_logs"
     ],
     "deny": []
   }

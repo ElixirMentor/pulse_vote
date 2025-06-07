@@ -3,6 +3,8 @@ defmodule PulseVoteWeb.PollLive.Show do
 
   alias PulseVote.Polls
 
+  on_mount {PulseVoteWeb.UserAuth, :mount_current_user}
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
@@ -10,12 +12,55 @@ defmodule PulseVoteWeb.PollLive.Show do
 
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
+    poll = Polls.get_poll!(id)
+    user = socket.assigns.current_user
+    
+    # Check if user has already voted
+    user_vote = if user, do: Polls.get_user_vote(poll.id, user.id), else: nil
+    
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:poll, Polls.get_poll!(id))}
+     |> assign(:poll, poll)
+     |> assign(:user_vote, user_vote)
+     |> assign(:total_votes, Polls.get_total_votes(poll.id))}
   end
 
-  defp page_title(:show), do: "Show Poll"
+  @impl true
+  def handle_event("vote", %{"option_index" => option_index}, socket) do
+    case socket.assigns.current_user do
+      nil ->
+        {:noreply, put_flash(socket, :error, "You must be logged in to vote")}
+      
+      user ->
+        option_index = String.to_integer(option_index)
+        
+        case Polls.cast_vote(socket.assigns.poll.id, option_index, user.id) do
+          {:ok, _vote} ->
+            # Refresh poll data
+            poll = Polls.get_poll!(socket.assigns.poll.id)
+            user_vote = Polls.get_user_vote(poll.id, user.id)
+            
+            {:noreply,
+             socket
+             |> assign(:poll, poll)
+             |> assign(:user_vote, user_vote)
+             |> assign(:total_votes, Polls.get_total_votes(poll.id))
+             |> put_flash(:info, "Vote cast successfully!")}
+          
+          {:error, changeset} ->
+            error_msg = 
+              case changeset.errors do
+                [poll_id: {"You have already voted on this poll", _}] -> 
+                  "You have already voted on this poll"
+                _ -> 
+                  "Unable to cast vote"
+              end
+            {:noreply, put_flash(socket, :error, error_msg)}
+        end
+    end
+  end
+
+  defp page_title(:show), do: "Poll"
   defp page_title(:edit), do: "Edit Poll"
 end
