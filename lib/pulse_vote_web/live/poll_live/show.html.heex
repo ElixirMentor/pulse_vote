@@ -12,7 +12,7 @@
   </.header>
 
   <div class="mt-8">
-    <%= if @user_vote || @show_results do %>
+    <%= if (@user_vote || @show_results) && !@changing_vote do %>
       <!-- Results view -->
       <%= if @user_vote do %>
         <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
@@ -27,14 +27,23 @@
       
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium text-gray-900">Results</h3>
-        <%= if !@user_vote do %>
-          <button
-            phx-click="toggle_results"
-            class="text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none"
-          >
-            Hide results
-          </button>
-        <% end %>
+        <div class="flex gap-3">
+          <%= if @user_vote do %>
+            <button
+              phx-click="change_vote"
+              class="text-sm text-orange-600 hover:text-orange-800 underline focus:outline-none"
+            >
+              Change my vote
+            </button>
+          <% else %>
+            <button
+              phx-click="toggle_results"
+              class="text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none"
+            >
+              Hide results
+            </button>
+          <% end %>
+        </div>
       </div>
       <div class="space-y-3">
         <%= for {option, index} <- Enum.with_index(@poll.options) do %>
@@ -64,15 +73,26 @@
       </div>
       
     <% else %>
-      <!-- User hasn't voted yet - show voting interface -->
+      <!-- User hasn't voted yet or is changing vote - show voting interface -->
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-900">Cast your vote</h3>
-        <button
-          phx-click="toggle_results"
-          class="text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none"
-        >
-          <%= if @show_results, do: "Hide results", else: "See results" %>
-        </button>
+        <h3 class="text-lg font-medium text-gray-900">
+          <%= if @changing_vote, do: "Change your vote", else: "Cast your vote" %>
+        </h3>
+        <%= if !@changing_vote do %>
+          <button
+            phx-click="toggle_results"
+            class="text-sm text-blue-600 hover:text-blue-800 underline focus:outline-none"
+          >
+            <%= if @show_results, do: "Hide results", else: "See results" %>
+          </button>
+        <% else %>
+          <button
+            phx-click="cancel_change"
+            class="text-sm text-gray-600 hover:text-gray-800 underline focus:outline-none"
+          >
+            Cancel
+          </button>
+        <% end %>
       </div>
       <div class="space-y-3">
         <%= for {option, index} <- Enum.with_index(@poll.options) do %>

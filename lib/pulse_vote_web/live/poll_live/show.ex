@@ -34,7 +34,8 @@ defmodule PulseVoteWeb.PollLive.Show do
          |> assign(:poll, poll)
          |> assign(:user_vote, user_vote)
          |> assign(:total_votes, Polls.get_total_votes(poll.id))
-         |> assign(:show_results, false)}
+         |> assign(:show_results, false)
+         |> assign(:changing_vote, false)}
     end
   end
 
@@ -53,12 +54,19 @@ defmodule PulseVoteWeb.PollLive.Show do
             poll = Polls.get_poll!(socket.assigns.poll.id)
             user_vote = Polls.get_user_vote(poll.id, user.id)
             
+            success_message = if socket.assigns.changing_vote do
+              "✅ Vote changed successfully!"
+            else
+              "🎉 Thanks for voting!"
+            end
+            
             {:noreply,
              socket
              |> assign(:poll, poll)
              |> assign(:user_vote, user_vote)
              |> assign(:total_votes, Polls.get_total_votes(poll.id))
-             |> put_flash(:info, "🎉 Thanks for voting!")}
+             |> assign(:changing_vote, false)
+             |> put_flash(:info, success_message)}
           
           {:error, changeset} ->
             error_msg = 
@@ -76,6 +84,16 @@ defmodule PulseVoteWeb.PollLive.Show do
   @impl true
   def handle_event("toggle_results", _params, socket) do
     {:noreply, assign(socket, :show_results, !socket.assigns.show_results)}
+  end
+
+  @impl true
+  def handle_event("change_vote", _params, socket) do
+    {:noreply, assign(socket, :changing_vote, true)}
+  end
+
+  @impl true
+  def handle_event("cancel_change", _params, socket) do
+    {:noreply, assign(socket, :changing_vote, false)}
   end
 
   @impl true

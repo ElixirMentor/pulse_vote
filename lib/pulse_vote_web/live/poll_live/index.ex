@@ -8,6 +8,10 @@ defmodule PulseVoteWeb.PollLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(PulseVote.PubSub, "polls")
+    end
+    
     {:ok, stream(socket, :polls, Polls.list_polls())}
   end
 
@@ -46,6 +50,11 @@ defmodule PulseVoteWeb.PollLive.Index do
   @impl true
   def handle_info({PulseVoteWeb.PollLive.FormComponent, {:saved, poll}}, socket) do
     {:noreply, stream_insert(socket, :polls, poll)}
+  end
+
+  @impl true
+  def handle_info({:poll_created, poll}, socket) do
+    {:noreply, stream_insert(socket, :polls, poll, at: 0)}
   end
 
   @impl true

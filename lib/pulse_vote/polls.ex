@@ -55,7 +55,20 @@ defmodule PulseVote.Polls do
 
   def create_poll_for_user(attrs \\ %{}, user) do
     attrs = Map.put(attrs, "user_id", user.id)
-    create_poll(attrs)
+    
+    case create_poll(attrs) do
+      {:ok, poll} = result ->
+        # Broadcast that a new poll was created
+        Phoenix.PubSub.broadcast(
+          PulseVote.PubSub,
+          "polls",
+          {:poll_created, poll}
+        )
+        result
+        
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -109,19 +122,27 @@ defmodule PulseVote.Polls do
   Casts a vote for a poll option.
   """
   def cast_vote(poll_id, option_index, user_id) do
-    %Vote{}
-    |> Vote.changeset(%{
-      poll_id: poll_id,
-      option_index: option_index,
-      user_id: user_id
-    })
-    |> Repo.insert()
-    |> case do
+    # Check if user already has a vote (for changing votes)
+    existing_vote = get_user_vote(poll_id, user_id)
+    
+    result = if existing_vote do
+      # User is changing their vote
+      change_vote(existing_vote, option_index)
+    else
+      # User is voting for the first time
+      %Vote{}
+      |> Vote.changeset(%{
+        poll_id: poll_id,
+        option_index: option_index,
+        user_id: user_id
+      })
+      |> Repo.insert()
+    end
+    
+    case result do
       {:ok, vote} ->
-        # Update the vote count in the poll
-        poll = get_poll!(poll_id)
-        updated_options = update_option_vote_count(poll.options, option_index, 1)
-        update_poll(poll, %{options: updated_options})
+        # Recalculate vote counts from actual votes in database
+        recalculate_poll_vote_counts(poll_id)
         
         # Broadcast the update to all subscribers
         broadcast_poll_update(poll_id)
@@ -131,6 +152,12 @@ defmodule PulseVote.Polls do
       {:error, changeset} ->
         {:error, changeset}
     end
+  end
+
+  defp change_vote(existing_vote, new_option_index) do
+    existing_vote
+    |> Vote.changeset(%{option_index: new_option_index})
+    |> Repo.update()
   end
 
   @doc """
@@ -153,13 +180,12 @@ defmodule PulseVote.Polls do
     |> Enum.with_index()
     |> Enum.map(fn {option, index} ->
       if index == option_index do
-        # Convert to map for the changeset
-        option
-        |> Map.from_struct()
-        |> Map.put(:vote_count, option.vote_count + increment)
+        # Convert to map if struct, then update the vote count
+        option_map = if is_struct(option), do: Map.from_struct(option), else: option
+        Map.put(option_map, :vote_count, option_map.vote_count + increment)
       else
-        # Convert to map for the changeset
-        Map.from_struct(option)
+        # Convert to map if struct for consistency
+        if is_struct(option), do: Map.from_struct(option), else: option
       end
     end)
   end
@@ -179,6 +205,29 @@ defmodule PulseVote.Polls do
     user_id == current_user_id
   end
   def can_delete_poll?(_, _), do: false
+
+  defp recalculate_poll_vote_counts(poll_id) do
+    # Get the poll and all votes for this poll
+    poll = get_poll!(poll_id)
+    votes = Repo.all(from(v in Vote, where: v.poll_id == ^poll_id))
+    
+    # Count votes for each option
+    vote_counts = votes
+    |> Enum.group_by(& &1.option_index)
+    |> Enum.map(fn {option_index, votes_list} -> {option_index, length(votes_list)} end)
+    |> Map.new()
+    
+    # Update the poll options with correct vote counts
+    updated_options = poll.options
+    |> Enum.with_index()
+    |> Enum.map(fn {option, index} ->
+      vote_count = Map.get(vote_counts, index, 0)
+      option_map = if is_struct(option), do: Map.from_struct(option), else: option
+      Map.put(option_map, :vote_count, vote_count)
+    end)
+    
+    update_poll(poll, %{options: updated_options})
+  end
 
   defp broadcast_poll_update(poll_id) do
     Phoenix.PubSub.broadcast(
