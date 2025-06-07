@@ -11,19 +11,25 @@ defmodule PulseVoteWeb.PollLive.Show do
   end
 
   @impl true
-  def handle_params(%{"id" => id}, _, socket) do
-    poll = Polls.get_poll!(id)
-    user = socket.assigns.current_user
-    
-    # Check if user has already voted
-    user_vote = if user, do: Polls.get_user_vote(poll.id, user.id), else: nil
-    
-    {:noreply,
-     socket
-     |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:poll, poll)
-     |> assign(:user_vote, user_vote)
-     |> assign(:total_votes, Polls.get_total_votes(poll.id))}
+  def handle_params(%{"id" => id} = params, _, socket) do
+    case socket.assigns.live_action do
+      :edit ->
+        {:noreply, apply_action(socket, :edit, params)}
+      
+      :show ->
+        poll = Polls.get_poll!(id)
+        user = socket.assigns.current_user
+        
+        # Check if user has already voted
+        user_vote = if user, do: Polls.get_user_vote(poll.id, user.id), else: nil
+        
+        {:noreply,
+         socket
+         |> assign(:page_title, page_title(socket.assigns.live_action))
+         |> assign(:poll, poll)
+         |> assign(:user_vote, user_vote)
+         |> assign(:total_votes, Polls.get_total_votes(poll.id))}
+    end
   end
 
   @impl true
@@ -63,4 +69,20 @@ defmodule PulseVoteWeb.PollLive.Show do
 
   defp page_title(:show), do: "Poll"
   defp page_title(:edit), do: "Edit Poll"
+  
+  defp apply_action(socket, :edit, %{"id" => id}) do
+    poll = Polls.get_poll!(id)
+    current_user = socket.assigns.current_user
+    
+    if Polls.can_edit_poll?(poll, current_user) do
+      socket
+      |> assign(:page_title, "Edit Poll")
+      |> assign(:poll, poll)
+    else
+      socket
+      |> put_flash(:error, "You can only edit polls you created")
+      |> push_patch(to: ~p"/polls/#{id}")
+    end
+  end
+  
 end

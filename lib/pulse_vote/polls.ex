@@ -53,6 +53,11 @@ defmodule PulseVote.Polls do
     |> Repo.insert()
   end
 
+  def create_poll_for_user(attrs \\ %{}, user) do
+    attrs = Map.put(attrs, "user_id", user.id)
+    create_poll(attrs)
+  end
+
   @doc """
   Updates a poll.
 
@@ -154,4 +159,20 @@ defmodule PulseVote.Polls do
       end
     end)
   end
+
+  @doc """
+  Checks if a user can edit a poll (only the creator can edit).
+  """
+  def can_edit_poll?(%Poll{user_id: user_id}, %{id: current_user_id}) do
+    user_id == current_user_id
+  end
+  def can_edit_poll?(_, _), do: false
+
+  @doc """
+  Checks if a user can delete a poll (only the creator can delete).
+  """
+  def can_delete_poll?(%Poll{user_id: user_id}, %{id: current_user_id}) do
+    user_id == current_user_id
+  end
+  def can_delete_poll?(_, _), do: false
 end

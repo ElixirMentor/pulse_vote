@@ -3,9 +3,11 @@
     {@poll.title}
     <:subtitle>{@poll.description}</:subtitle>
     <:actions>
-      <.link patch={~p"/polls/#{@poll}/show/edit"} phx-click={JS.push_focus()}>
-        <.button>Edit poll</.button>
-      </.link>
+      <%= if PulseVote.Polls.can_edit_poll?(@poll, @current_user) do %>
+        <.link patch={~p"/polls/#{@poll}/show/edit"} phx-click={JS.push_focus()}>
+          <.button>Edit poll</.button>
+        </.link>
+      <% end %>
     </:actions>
   </.header>
 
@@ -90,6 +92,7 @@
     title={@page_title}
     action={@live_action}
     poll={@poll}
+    current_user={@current_user}
     patch={~p"/polls/#{@poll}"}
   />
 </.modal>

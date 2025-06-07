@@ -18,15 +18,19 @@
     <div class="sr-only">
       <.link navigate={~p"/polls/#{poll}"}>Show</.link>
     </div>
-    <.link patch={~p"/polls/#{poll}/edit"}>Edit</.link>
+    <%= if PulseVote.Polls.can_edit_poll?(poll, @current_user) do %>
+      <.link patch={~p"/polls/#{poll}/edit"}>Edit</.link>
+    <% end %>
   </:action>
   <:action :let={{id, poll}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: poll.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
+    <%= if PulseVote.Polls.can_delete_poll?(poll, @current_user) do %>
+      <.link
+        phx-click={JS.push("delete", value: %{id: poll.id}) |> hide("##{id}")}
+        data-confirm="Are you sure?"
+      >
+        Delete
+      </.link>
+    <% end %>
   </:action>
 </.table>
 
@@ -37,6 +41,7 @@
     title={@page_title}
     action={@live_action}
     poll={@poll}
+    current_user={@current_user}
     patch={~p"/polls"}
   />
 </.modal>

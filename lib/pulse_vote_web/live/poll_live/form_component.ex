@@ -97,8 +97,18 @@ defmodule PulseVoteWeb.PollLive.FormComponent do
     current_params = form_to_params(socket.assigns.form)
     existing_options = Map.get(current_params, "options", [])
     
+    # Convert map-indexed options to list if needed
+    options_list = case existing_options do
+      map when is_map(map) ->
+        map
+        |> Enum.sort_by(fn {k, _v} -> String.to_integer(k) end)
+        |> Enum.map(fn {_k, v} -> v end)
+      list when is_list(list) ->
+        list
+    end
+    
     # Add new empty option
-    new_options = existing_options ++ [%{"text" => "", "vote_count" => 0}]
+    new_options = options_list ++ [%{"text" => "", "vote_count" => 0}]
     updated_params = Map.put(current_params, "options", new_options)
     
     changeset = 
@@ -116,8 +126,18 @@ defmodule PulseVoteWeb.PollLive.FormComponent do
     current_params = form_to_params(socket.assigns.form)
     existing_options = Map.get(current_params, "options", [])
     
+    # Convert map-indexed options to list if needed
+    options_list = case existing_options do
+      map when is_map(map) ->
+        map
+        |> Enum.sort_by(fn {k, _v} -> String.to_integer(k) end)
+        |> Enum.map(fn {_k, v} -> v end)
+      list when is_list(list) ->
+        list
+    end
+    
     # Remove option at index
-    new_options = List.delete_at(existing_options, index)
+    new_options = List.delete_at(options_list, index)
     updated_params = Map.put(current_params, "options", new_options)
     
     changeset = 
@@ -148,7 +168,9 @@ defmodule PulseVoteWeb.PollLive.FormComponent do
   end
 
   defp save_poll(socket, :new, poll_params) do
-    case Polls.create_poll(poll_params) do
+    current_user = socket.assigns.current_user
+    
+    case Polls.create_poll_for_user(poll_params, current_user) do
       {:ok, poll} ->
         notify_parent({:saved, poll})
 

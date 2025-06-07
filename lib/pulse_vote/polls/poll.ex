@@ -22,6 +22,7 @@ defmodule PulseVote.Polls.Poll do
     field :description, :string
     field :title, :string
     embeds_many :options, Option
+    belongs_to :user, PulseVote.Accounts.User
 
     timestamps(type: :utc_datetime)
   end
@@ -29,9 +30,9 @@ defmodule PulseVote.Polls.Poll do
   @doc false
   def changeset(poll, attrs) do
     poll
-    |> cast(attrs, [:title, :description])
+    |> cast(attrs, [:title, :description, :user_id])
     |> cast_embed(:options)
-    |> validate_required([:title, :description])
+    |> validate_required([:title, :user_id])
     |> validate_length(:options, min: 2, message: "must have at least 2 options")
   end
 end

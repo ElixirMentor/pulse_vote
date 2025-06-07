@@ -4,6 +4,8 @@ defmodule PulseVoteWeb.PollLive.Index do
   alias PulseVote.Polls
   alias PulseVote.Polls.Poll
 
+  on_mount {PulseVoteWeb.UserAuth, :mount_current_user}
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok, stream(socket, :polls, Polls.list_polls())}
@@ -15,9 +17,18 @@ defmodule PulseVoteWeb.PollLive.Index do
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
-    socket
-    |> assign(:page_title, "Edit Poll")
-    |> assign(:poll, Polls.get_poll!(id))
+    poll = Polls.get_poll!(id)
+    current_user = socket.assigns.current_user
+    
+    if Polls.can_edit_poll?(poll, current_user) do
+      socket
+      |> assign(:page_title, "Edit Poll")
+      |> assign(:poll, poll)
+    else
+      socket
+      |> put_flash(:error, "You can only edit polls you created")
+      |> push_patch(to: ~p"/polls")
+    end
   end
 
   defp apply_action(socket, :new, _params) do
@@ -40,8 +51,13 @@ defmodule PulseVoteWeb.PollLive.Index do
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     poll = Polls.get_poll!(id)
-    {:ok, _} = Polls.delete_poll(poll)
-
-    {:noreply, stream_delete(socket, :polls, poll)}
+    current_user = socket.assigns.current_user
+    
+    if Polls.can_delete_poll?(poll, current_user) do
+      {:ok, _} = Polls.delete_poll(poll)
+      {:noreply, stream_delete(socket, :polls, poll)}
+    else
+      {:noreply, put_flash(socket, :error, "You can only delete polls you created")}
+    end
   end
 end
