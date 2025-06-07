@@ -33,7 +33,8 @@ defmodule PulseVoteWeb.PollLive.Show do
          |> assign(:page_title, page_title(socket.assigns.live_action))
          |> assign(:poll, poll)
          |> assign(:user_vote, user_vote)
-         |> assign(:total_votes, Polls.get_total_votes(poll.id))}
+         |> assign(:total_votes, Polls.get_total_votes(poll.id))
+         |> assign(:show_results, false)}
     end
   end
 
@@ -70,6 +71,11 @@ defmodule PulseVoteWeb.PollLive.Show do
             {:noreply, put_flash(socket, :error, error_msg)}
         end
     end
+  end
+
+  @impl true
+  def handle_event("toggle_results", _params, socket) do
+    {:noreply, assign(socket, :show_results, !socket.assigns.show_results)}
   end
 
   @impl true
