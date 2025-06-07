@@ -17,11 +17,11 @@
 - [x] Add basic validations
 
 ## Phase 3: Poll Creation
-- [ ] Create poll creation LiveView
-- [ ] Build form for poll title/description
-- [ ] Add dynamic option inputs (add/remove options)
-- [ ] Implement poll creation logic
-- [ ] Add basic validation and error handling
+- [x] Create poll creation LiveView
+- [x] Build form for poll title/description
+- [x] Add dynamic option inputs (add/remove options)
+- [x] Implement poll creation logic
+- [x] Add basic validation and error handling
 
 ## Phase 4: Voting Interface
 - [ ] Create poll voting LiveView
@@ -59,3 +59,4 @@
 - Keep it simple but satisfying
 - Focus on the real-time magic
 - Make voting feel instant and responsive
+- **IMPORTANT**: Run `mix compile` after each major change to ensure no errors

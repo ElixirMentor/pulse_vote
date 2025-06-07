@@ -3,7 +3,8 @@
     "allow": [
       "WebFetch(domain:hexdocs.pm)",
       "WebFetch(domain:github.com)",
-      "Bash(mix deps.get:*)"
+      "Bash(mix deps.get:*)",
+      "Bash(mix compile)"
     ],
     "deny": []
   }

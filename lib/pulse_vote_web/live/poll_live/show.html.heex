@@ -1,0 +1,27 @@
+<.header>
+  Poll {@poll.id}
+  <:subtitle>This is a poll record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/polls/#{@poll}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit poll</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Title">{@poll.title}</:item>
+  <:item title="Description">{@poll.description}</:item>
+</.list>
+
+<.back navigate={~p"/polls"}>Back to polls</.back>
+
+<.modal :if={@live_action == :edit} id="poll-modal" show on_cancel={JS.patch(~p"/polls/#{@poll}")}>
+  <.live_component
+    module={PulseVoteWeb.PollLive.FormComponent}
+    id={@poll.id}
+    title={@page_title}
+    action={@live_action}
+    poll={@poll}
+    patch={~p"/polls/#{@poll}"}
+  />
+</.modal>
