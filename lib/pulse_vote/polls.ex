@@ -122,6 +122,10 @@ defmodule PulseVote.Polls do
         poll = get_poll!(poll_id)
         updated_options = update_option_vote_count(poll.options, option_index, 1)
         update_poll(poll, %{options: updated_options})
+        
+        # Broadcast the update to all subscribers
+        broadcast_poll_update(poll_id)
+        
         {:ok, vote}
       
       {:error, changeset} ->
@@ -175,4 +179,12 @@ defmodule PulseVote.Polls do
     user_id == current_user_id
   end
   def can_delete_poll?(_, _), do: false
+
+  defp broadcast_poll_update(poll_id) do
+    Phoenix.PubSub.broadcast(
+      PulseVote.PubSub,
+      "poll:#{poll_id}",
+      {:poll_updated, poll_id}
+    )
+  end
 end

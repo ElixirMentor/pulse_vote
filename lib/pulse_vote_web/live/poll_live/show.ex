@@ -20,6 +20,11 @@ defmodule PulseVoteWeb.PollLive.Show do
         poll = Polls.get_poll!(id)
         user = socket.assigns.current_user
         
+        # Subscribe to real-time updates for this poll
+        if connected?(socket) do
+          Phoenix.PubSub.subscribe(PulseVote.PubSub, "poll:#{poll.id}")
+        end
+        
         # Check if user has already voted
         user_vote = if user, do: Polls.get_user_vote(poll.id, user.id), else: nil
         
@@ -52,7 +57,7 @@ defmodule PulseVoteWeb.PollLive.Show do
              |> assign(:poll, poll)
              |> assign(:user_vote, user_vote)
              |> assign(:total_votes, Polls.get_total_votes(poll.id))
-             |> put_flash(:info, "Vote cast successfully!")}
+             |> put_flash(:info, "🎉 Thanks for voting!")}
           
           {:error, changeset} ->
             error_msg = 
@@ -64,6 +69,22 @@ defmodule PulseVoteWeb.PollLive.Show do
               end
             {:noreply, put_flash(socket, :error, error_msg)}
         end
+    end
+  end
+
+  @impl true
+  def handle_info({:poll_updated, poll_id}, socket) do
+    if socket.assigns.poll.id == poll_id do
+      # Refresh poll data with new vote counts
+      updated_poll = Polls.get_poll!(poll_id)
+      total_votes = Polls.get_total_votes(poll_id)
+      
+      {:noreply,
+       socket
+       |> assign(:poll, updated_poll)
+       |> assign(:total_votes, total_votes)}
+    else
+      {:noreply, socket}
     end
   end
 

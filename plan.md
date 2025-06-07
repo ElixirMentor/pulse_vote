@@ -31,11 +31,11 @@
 - [x] Prevent duplicate voting per session
 
 ## Phase 5: Real-time Results
-- [ ] Add PubSub for real-time updates
-- [ ] Broadcast vote updates to all viewers
-- [ ] Create animated progress bars
-- [ ] Show live vote counts
-- [ ] Display total votes and percentages
+- [x] Add PubSub for real-time updates
+- [x] Broadcast vote updates to all viewers
+- [x] Create animated progress bars
+- [x] Show live vote counts
+- [x] Display total votes and percentages
 
 ## Phase 6: Polish & Features
 - [ ] Add poll listing page
