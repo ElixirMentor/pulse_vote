@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:hexdocs.pm)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(mix deps.get:*)"
     ],
     "deny": []
   }
