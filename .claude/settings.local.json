@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:hexdocs.pm)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(mix deps.get:*)",
+      "Bash(mix compile)",
+      "mcp__tidewave__project_eval",
+      "mcp__tidewave__get_logs",
+      "mcp__tidewave__list_liveview_pages",
+      "mcp__tidewave__execute_sql_query"
     ],
     "deny": []
   }
